@@ -1,6 +1,6 @@
-# Justice League Heroes — Technical Lab (JLH Lab)
+# Justice League Heroes — Technical Lab (JLH Lab v0.1)
 
-🌐 **Live Site:** [justice-league-heroes-lab.vercel.app](https://justice-league-heroes-lab.vercel.app/)
+🌐 **Live Site:** [justice-league-heroes-lab.vercel.app](https://justice-league-heroes-lab.vercel.app/) | 🚧 **Status:** `v0.1 — Early Access / Work in Progress`
 
 An interactive technical documentation hub, damage calculator, and mechanics lab dedicated to **Justice League Heroes** (PS2 / PSP / Xbox). Built in public to document hidden game formulas, character stats, and emulation setups.
 
