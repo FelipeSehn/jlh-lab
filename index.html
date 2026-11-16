@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <title>JLH Lab</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #0f1115; color: #e6edf3; padding: 20px; max-width: 540px; margin: auto; }
+    h2 { border-bottom: 1px solid #30363d; padding-bottom: 10px; color: #58a6ff; }
+    label { display: block; margin-top: 12px; font-size: 14px; color: #8b949e; }
+    select, input, button { width: 100%; padding: 10px; margin-top: 5px; font-size: 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #fff; box-sizing: border-box; }
+    button { background: #238636; border: none; font-weight: bold; cursor: pointer; margin-top: 18px; }
+    button:hover { background: #2ea043; }
+    .card { background: #161b22; padding: 16px; border-radius: 8px; margin-top: 18px; border-left: 4px solid #58a6ff; }
+    .alerta { color: #d29922; font-weight: bold; margin-top: 8px; }
+    .erro { color: #f85149; font-weight: bold; }
+    .tag { display: inline-block; background: #21262d; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: #79c0ff; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <h2>⚡ JLH Lab — Engenharia de Builds</h2>
+
+  <label>Herói & Habilidade (Banco de Dados):</label>
+  <select id="skillSelect" onchange="calcular()"></select>
+
+  <label>Gemas de Damage (0 a 5):</label>
+  <input type="number" id="dmg" value="1" min="0" max="5" oninput="calcular()">
+
+  <label>Gemas de Luck (0 a 5):</label>
+  <input type="number" id="luck" value="2" min="0" max="5" oninput="calcular()">
+
+  <label>Gemas de Speed (0 a 5):</label>
+  <input type="number" id="speed" value="2" min="0" max="5" oninput="calcular()">
+
+  <button onclick="calcular()">Recalcular Simulação</button>
+
+  <div class="card" id="resultado"></div>
+
+  <script>
+    // =========================================================================
+    // 1. SEU BANCO DE DADOS DO JOGO (Adicione novas skills aqui conforme testar!)
+    // =========================================================================
+    const BANCO_DE_SKILLS = {
+      ww_flying: {
+        heroi: "Mulher-Maravilha",
+        nome: "Flying Charge (Investida Giratória)",
+        pisoDano: 223,
+        ganhoPorDamage: 85,
+        daCrit: true,
+        multCritico: 2.95,
+        speedCapAlerta: 3, // Avisa a partir de 3 gemas de speed (160%)
+        notaFixa: "Build ótima validada: 1 Damage + 2 Luck + 2 Speed (308 / 895 a 140%)."
+      },
+      ww_ricochet: {
+        heroi: "Mulher-Maravilha",
+        nome: "Ricochet (Tiara)",
+        pisoDano: 1100,
+        ganhoPorDamage: 302,
+        daCrit: false,
+        multCritico: 1,
+        speedCapAlerta: 99,
+        notaFixa: "Flag CanCrit = FALSE. Foque 100% em Damage (2610 fixo com 5 gemas)."
+      },
+      // MODELO PRONTO PARA O PRÓXIMO TESTE:
+      flash_flurry: {
+        heroi: "Flash (Em Teste)",
+        nome: "Flurry / Rapid Punch",
+        pisoDano: 100,       // <-- Troque pelo dano com 0 gemas que você medir no jogo!
+        ganhoPorDamage: 40,  // <-- Troque pela diferença ao colocar 1 gema de Damage!
+        da: true,
+        multCritico: 3.0,
+        speedCapAlerta: 99,
+        notaFixa: "Coletar dados empíricos no laboratório."
+      }
+    };
+
+    // =========================================================================
+    // 2. MOTOR DE CÁLCULO (Lê o banco acima e monta a tela automaticamente)
+    // =========================================================================
+    const select = document.getElementById("skillSelect");
+    for (const [id, dados] of Object.entries(BANCO_DE_SKILLS)) {
+      const opcao = document.createElement("option");
+      opcao.value = id;
+      opcao.textContent = `${dados.heroi} — ${dados.nome}`;
+      select.appendChild(opcao);
+    }
+
+    function calcular() {
+      const skill = BANCO_DE_SKILLS[select.value];
+      const dmg = Number(document.getElementById("dmg").value);
+      const luck = Number(document.getElementById("luck").value);
+      const speed = Number(document.getElementById("speed").value);
+      const caixa = document.getElementById("resultado");
+
+      if (dmg + luck + speed > 5) {
+        caixa.innerHTML = "<p class='erro'>❌ Limite excedido: Você só pode equipar 5 gemas no total!</p>";
+        return;
+      }
+
+      const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
+      const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
+      const attackSpeed = 100 + (speed * 20);
+      let alertas = "";
+
+      if (!skill.canCrit && luck > 0) {
+        alertas += "<p class='alerta'>⚠️ Desperdício: Esta skill não dá crítico (CanCrit = FALSE).</p>";
+      }
+      if (skill.canCrit && luck === 0) {
+        alertas += "<p class='alerta'>⚠️ Crítico desligado: 0 gemas de Luck = 0% de chance.</p>";
+      }
+      if (speed >= skill.speedCapAlerta) {
+        alertas += "<p class='alerta'>⚠️ Alerta de Hitbox: 160%+ Speed pode atravessar o alvo sem registrar hits.</p>";
+      }
+
+      caixa.innerHTML = `
+        <span class="tag">${skill.heroi}</span>
+        <p><strong>Dano Normal:</strong> ${danoNormal}</p>
+        <p><strong>Dano Crítico:</strong> ${danoCritico > 0 ? danoCritico : "Não aplica"}</p>
+        <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+        <p style="color:#8b949e; font-size:13px;">📌 ${skill.notaFixa}</p>
+        ${alertas}
+      `;
+    }
+
+    calcular(); // Já inicia calculando ao abrir a página!
+  </script>
+
+</body>
+</html>
