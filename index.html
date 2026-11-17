@@ -148,7 +148,11 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0)); // <--- Ponto e vírgula adicionado aqui!
+        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0)); 
+
+        // CORREÇÃO AQUI: Calcula a energia subtraindo o bônus de dano se a skill tiver essa propriedade
+        const reducaoDanoEnergia = dmg * (skill.reducaoEnergiaPorDamage || 0);
+        const energiaFinal = (skill.energiaBase || 0) - reducaoDanoEnergia;
 
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
@@ -157,6 +161,11 @@
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
       }
+
+      // CORREÇÃO AQUI: Transforma o array de notas em texto HTML formatado
+      const notasHTML = array.isArray(skill.notasFixas)
+      ? skill.notasFixas.map(n => `📌 ${n}`).join('<br>')
+      : `📌 ${skill.notaFixa || ''}`;
 
       caixa.innerHTML = `
         <span class="tag">${skill.heroi} — ${totalBoosts}/5 Boosts</span>
