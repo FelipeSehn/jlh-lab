@@ -82,18 +82,20 @@
         multCritico: 0,
         speedCapAlerta: 99,
         energiaBase: 253,
-        reducaoEnergiaPorDamage: 38, // <--- O delta exato de redução por Damage Boost nível 7!
+        reducaoEnergiaPorDamage: 38, // -38 por Damage Boost
         duracaoBase: 4.0,
-        ganhoPorDuration: 3.2, // <--- o ganho exato por boost de Duration nível 7!
-        ganhoPorSpeedDuration: 1.8, // <--- 0 acréscimo de duração oculto por Speed Boost nível 7!
+        ganhoPorDuration: 3.2, // +3.2s por Duration Boost
+        ganhoPorSpeedDuration: 1.8, // +1.8s por Speed Boost
+        ganhoPorLuckDuration: 1.8, // +1.8s por Luck Boost
         raioBase: 12.0,
-        ganhoPorRange: 7.4, // <--- 0 ganho exato por boost de range nível 7!
+        ganhoPorRange: 7.4, // +7.4ft por Range Boost
         maxInimigos: 5,
         // transformando em array para aceitar várias notas:
         notasFixas: [
         "Crowd control skill. Range and Duration boosts looks great here!",
         "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63).",
-        "Tested with level 7 Speed Boosts: Secretly scales duration (1.8s per boost) alongside regular duration boosts!",
+        "Tested with level 7 Speed & Luck Boosts: Both Secretly scales duration (1.8s per boost)!",
+        "Tested with level 7 Efficiency Boosts: Drips Energy cost down rapidly, capping at 42 energy with 4-5 boosts."
        ]
       }
     };
@@ -151,19 +153,30 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-
-        // A duração agora soma o Duration Boost (+3.2) E o Speed Boost (+1.8) se a skill tiver essa propriedade
-        const ganhoDuracaoTotal = (duration * (skill.ganhoPorDuration || 0)) + (speed * (skill.ganhoPorSpeedDuration || 0));
+        
+        // A duração soma Duration (+3.2), Speed (+1.8) e Luck (+1.8) por boost nível 7
+        const ganhoDuracaoTotal = (duration * (skill.ganhoPorDuration || 0)) + 
+                                  (speed * (skill.ganhoPorSpeedDuration || 0)) + 
+                                  (luck * (skill.ganhoPorLuckDuration || 0));
         const duracaoFinal = skill.duracaoBase + ganhoDuracaoTotal;
         
-        // CORREÇÃO AQUI: Calcula a energia subtraindo o bônus de dano se a skill tiver essa propriedade
-        const reducaoDanoEnergia = dmg * (skill.reducaoEnergiaPorDamage || 0);
-        const energiaFinal = (skill.energiaBase || 0) - reducaoDanoEnergia;
+        // USANDO 'let' AQUI: A energia pode mudar dependendo do Damage ou Efficiency
+        let energiaCalculada = skill.energiaBase || 0;
+
+        if (dmg > 0 && skill.reducaoEnergiaPorDamage) {
+          energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
+        }
+
+        // Se houver Efficiency boosts no Lasso, aplica a tabela de degraus
+        if (efficiency > 0 && skill.heroi === "Wonder Woman" && skill.nome === "Lasso Capture") {
+          const tabelaEficiencia = [253, 253, 152, 51, 42, 42]; // Índices de 0 a 5 boosts
+          energiaCalculada = tabelaEficiencia[efficiency];
+        }
 
         corpoHTML = `
-          <p><strong>Energy Cost:</strong> ${energiaFinal} ${dmg > 0 ? `(${dmg} Damage boost${dmg !== 1 ? 's' : ''} reduced cost)` : ''}</p>
-          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s (${duration} Duration boost${duration !== 1 ? 's' : ''})</p>
-          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft (${range} Range boost${range !== 1 ? 's' : ''})</p>
+          <p><strong>Energy Cost:</strong> ${energiaCalculada} ${dmg > 0 ? `(${dmg} Damage boost${dmg !== 1 ? 's' : ''})` : ''} ${efficiency > 0 ? `(${efficiency} Efficiency boost${efficiency !== 1 ? 's' : ''})` : ''}</p>
+          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s</p>
+          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
       }
