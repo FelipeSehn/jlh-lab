@@ -2,10 +2,11 @@
 <html lang="en-US">
 <head>
   <meta charset="UTF-8">
-  <title>JLH Lab</title>
+  <title>JLH Lab (v0.1) — Justice League Heroes Technical Lab</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #0f1115; color: #e6edf3; padding: 20px; max-width: 540px; margin: auto; }
     h2 { border-bottom: 1px solid #30363d; padding-bottom: 10px; color: #58a6ff; }
+    .version-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; background: rgba(255, 193, 7, 0.14); color: #ffd54f; border: 1px solid rgba(255, 193, 7, 0.35); margin-bottom: 10px; }
     label { display: block; margin-top: 12px; font-size: 14px; color: #8b949e; }
     select, input, button { width: 100%; padding: 10px; margin-top: 5px; font-size: 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #fff; box-sizing: border-box; }
     button { background: #238636; border: none; font-weight: bold; cursor: pointer; margin-top: 18px; }
@@ -18,64 +19,74 @@
 </head>
 <body>
 
-  <h2>⚡ JLH Lab — Engenharia de Builds</h2>
+  <h2>⚡ JLH Lab — Build Engineering</h2>
+  <div class="version-badge">v0.1 — Early Access / Work in Progress</div>
 
-  <label>Herói & Habilidade (Banco de Dados):</label>
+  <label>Hero & Ability (Database):</label>
   <select id="skillSelect" onchange="calcular()"></select>
 
-  <label>Gemas de Damage (0 a 5):</label>
+  <label>Damage Boosts (0 to 5):</label>
   <input type="number" id="dmg" value="1" min="0" max="5" oninput="calcular()">
 
-  <label>Gemas de Luck (0 a 5):</label>
+  <label>Luck Boosts (0 to 5):</label>
   <input type="number" id="luck" value="2" min="0" max="5" oninput="calcular()">
 
-  <label>Gemas de Speed (0 a 5):</label>
+  <label>Speed Boosts (0 to 5):</label>
   <input type="number" id="speed" value="2" min="0" max="5" oninput="calcular()">
 
-  <button onclick="calcular()">Recalcular Simulação</button>
+  <label>Duration Boosts (0 to 5):</label>
+  <input type="number" id="duration" value="0" min="0" max="5" oninput="calcular()">
+
+  <label>Range Boosts (0 to 5):</label>
+  <input type="number" id="range" value="0" min="0" max="5" oninput="calcular()">
+
+  <label>Efficiency Boosts (0 to 5):</label>
+  <input type="number" id="efficiency" value="0" min="0" max="5" oninput="calcular()">
+ 
+  <button onclick="calcular()">Recalculate Simulation</button>
 
   <div class="card" id="resultado"></div>
 
   <script>
     // =========================================================================
-    // 1. SEU BANCO DE DADOS DO JOGO (Adicione novas skills aqui conforme testar!)
+    // 1. Game DATABASE (Add new tested skills here!)
     // =========================================================================
     const BANCO_DE_SKILLS = {
       ww_flying: {
-        heroi: "Mulher-Maravilha",
+        heroi: "Wonder Woman",
         nome: "Flying Charge (Investida Giratória)",
         pisoDano: 223,
         ganhoPorDamage: 85,
-        daCrit: true,
+        canCrit: true,
         multCritico: 2.95,
         speedCapAlerta: 3, // Avisa a partir de 3 gemas de speed (160%)
-        notaFixa: "Build ótima validada: 1 Damage + 2 Luck + 2 Speed (308 / 895 a 140%)."
+        notaFixa: "Validated optimal build: 1 Damage + 2 Luck + 2 Speed (308 / 895 at 140%)"
       },
       ww_ricochet: {
-        heroi: "Mulher-Maravilha",
+        heroi: "Wonder Woman",
         nome: "Ricochet (Tiara)",
         pisoDano: 1100,
         ganhoPorDamage: 302,
-        daCrit: false,
+        canCrit: false,
         multCritico: 1,
         speedCapAlerta: 99,
-        notaFixa: "Flag CanCrit = FALSE. Foque 100% em Damage (2610 fixo com 5 gemas)."
+        notaFixa: "Flag CanCrit = FALSE. Focus 100% on Damage (2610 flat with 5 boosts)."
       },
       // MODELO PRONTO PARA O PRÓXIMO TESTE:
       flash_flurry: {
-        heroi: "Flash (Em Teste)",
+        heroi: "The Flash (Testing)",
         nome: "Flurry / Rapid Punch",
-        pisoDano: 100,       // <-- Troque pelo dano com 0 gemas que você medir no jogo!
-        ganhoPorDamage: 40,  // <-- Troque pela diferença ao colocar 1 gema de Damage!
-        da: true,
+        pisoDano: 100,       // <-- Replace with 0-gem base damage measured in-game!
+        ganhoPorDamage: 40,  // <-- Replace with delta from adding 1 Damage gem!
+        canCrit: true,
         multCritico: 3.0,
         speedCapAlerta: 99,
-        notaFixa: "Coletar dados empíricos no laboratório."
+        notaFixa: "Collecting empirical lab data."
       }
     };
 
     // =========================================================================
-    // 2. MOTOR DE CÁLCULO (Lê o banco acima e monta a tela automaticamente)
+    // 2. CALCULATION ENGINE (Reads the database above and renders UI)
     // =========================================================================
     const select = document.getElementById("skillSelect");
     for (const [id, dados] of Object.entries(BANCO_DE_SKILLS)) {
@@ -90,10 +101,15 @@
       const dmg = Number(document.getElementById("dmg").value);
       const luck = Number(document.getElementById("luck").value);
       const speed = Number(document.getElementById("speed").value);
+      const duration = Number(document.getElementById("duration").value);
+      const range = Number(document.getElementById("range").value);
+      const efficiency = Number(document.getElementById("efficiency").value);
       const caixa = document.getElementById("resultado");
 
-      if (dmg + luck + speed > 5) {
-        caixa.innerHTML = "<p class='erro'>❌ Limite excedido: Você só pode equipar 5 gemas no total!</p>";
+      const totalBoosts = dmg + luck + speed + duration + range + efficiency;
+
+      if (totalBoosts > 5) {
+        caixa.innerHTML = `<p class='erro'>❌ Limit exceeded (${totalBoosts}/5): You can only equip 5 boosts in total!</p>`;
         return;
       }
 
@@ -103,26 +119,27 @@
       let alertas = "";
 
       if (!skill.canCrit && luck > 0) {
-        alertas += "<p class='alerta'>⚠️ Desperdício: Esta skill não dá crítico (CanCrit = FALSE).</p>";
+        alertas += "<p class='alerta'>⚠️ Wasted Slot: This skill cannot crit (CanCrit = False).</p>";
       }
       if (skill.canCrit && luck === 0) {
-        alertas += "<p class='alerta'>⚠️ Crítico desligado: 0 gemas de Luck = 0% de chance.</p>";
+        alertas += "<p class='alerta'>⚠️ Crit Disabled: 0 luck boosts = 0% crit chance.</p>";
       }
       if (speed >= skill.speedCapAlerta) {
-        alertas += "<p class='alerta'>⚠️ Alerta de Hitbox: 160%+ Speed pode atravessar o alvo sem registrar hits.</p>";
+        alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
       }
 
       caixa.innerHTML = `
-        <span class="tag">${skill.heroi}</span>
-        <p><strong>Dano Normal:</strong> ${danoNormal}</p>
-        <p><strong>Dano Crítico:</strong> ${danoCritico > 0 ? danoCritico : "Não aplica"}</p>
+        <span class="tag">${skill.heroi} • ${totalBoosts}/5 Boosts</span>
+        <p><strong>Normal Damage:</strong> ${danoNormal}</p>
+        <p><strong>Critical Damage:</strong> ${danoCritico > 0 ? danoCritico : "N/A"}</p>
         <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+        <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency</p>
         <p style="color:#8b949e; font-size:13px;">📌 ${skill.notaFixa}</p>
         ${alertas}
       `;
     }
 
-    calcular(); // Já inicia calculando ao abrir a página!
+    calcular(); // run initial calculation on page load
   </script>
 
 </body>
