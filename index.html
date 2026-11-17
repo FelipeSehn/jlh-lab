@@ -26,19 +26,19 @@
   <select id="skillSelect" onchange="calcular()"></select>
 
   <label>Damage Boosts (0 to 5):</label>
-  <input type="number" id="dmg" value="1" min="0" max="5" oninput="calcular()">
+  <input type="number" id="dmg" value="0" min="0" max="5" oninput="calcular()">
 
   <label>Luck Boosts (0 to 5):</label>
-  <input type="number" id="luck" value="2" min="0" max="5" oninput="calcular()">
+  <input type="number" id="luck" value="0" min="0" max="5" oninput="calcular()">
 
   <label>Speed Boosts (0 to 5):</label>
-  <input type="number" id="speed" value="2" min="0" max="5" oninput="calcular()">
+  <input type="number" id="speed" value="0" min="0" max="5" oninput="calcular()">
 
   <label>Duration Boosts (0 to 5):</label>
   <input type="number" id="duration" value="0" min="0" max="5" oninput="calcular()">
 
   <label>Range Boosts (0 to 5):</label>
-  <input type="number" id="range" value="0" min="0" max="5" oninput="calcular()">
+  <input type="number" id="range" value="5" min="0" max="5" oninput="calcular()">
 
   <label>Efficiency Boosts (0 to 5):</label>
   <input type="number" id="efficiency" value="0" min="0" max="5" oninput="calcular()">
@@ -141,7 +141,7 @@
           <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
         `;
       } else {
-        const raioFinal = skill.raioBase + (range * (skill.ganhoPorRAnge || 0));
+        const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
 
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
