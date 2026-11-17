@@ -83,8 +83,9 @@
         energiaBase: 253,
         duracaoBase: 4.0,
         raioBase: 12.0,
+        ganhoPorRange: 7.4, // <--- 0 ganho exato por boost de range nível 7!
         maxInimigos: 5,
-        notaFixa: "Crowd control skill. Range and Duration boosts looks better here!" // <-- fixed here!
+        notaFixa: "Crowd control skill. Range and Duration boosts looks better here!"
       }
     };
 
@@ -140,10 +141,12 @@
           <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
         `;
       } else {
+        const raioFinal = skill.raioBase + (range * (skill.ganhoPorRAnge || 0));
+
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
           <p><strong>Duration:</strong> ${skill.duracaoBase}s (Modified by Duration Boost)</p>
-          <p><strong>Capture Radius:</strong> ${skill.raioBase} ft (Modified by Range Boost)</p>
+          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft (${range} Range boost${range !== 1 ? 's' : ''})</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
       }
