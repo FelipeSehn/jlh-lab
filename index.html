@@ -163,14 +163,14 @@
         // USANDO 'let' AQUI: A energia pode mudar dependendo do Damage ou Efficiency
         let energiaCalculada = skill.energiaBase || 0;
 
-        if (dmg > 0 && skill.reducaoEnergiaPorDamage) {
-          energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
-        }
-
-        // Se houver Efficiency boosts no Lasso, aplica a tabela de degraus
+        // Se houver Efficiency boosts no Lasso, aplica a tabela de degraus (do 0 ao 5 boosts)
         if (efficiency > 0 && skill.heroi === "Wonder Woman" && skill.nome === "Lasso Capture") {
-          const tabelaEficiencia = [253, 253, 152, 51, 42, 42]; // Índices de 0 a 5 boosts
+          const tabelaEficiencia = [253, 253, 152, 51, 42, 42]; 
           energiaCalculada = tabelaEficiencia[efficiency];
+        }
+        // se não tem eficiência, mas tem Damage, aplica a redução linear de 38 por boost
+        else if (dmg > 0 && skill.reducaoEnergiaPorDamage) {
+          energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
         }
 
         corpoHTML = `
