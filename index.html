@@ -82,6 +82,7 @@
         speedCapAlerta: 99,
         energiaBase: 253,
         duracaoBase: 4.0,
+        ganhoPorDuration: 3.2, // <--- o ganho exato por boost de Duration nível 7!
         raioBase: 12.0,
         ganhoPorRange: 7.4, // <--- 0 ganho exato por boost de range nível 7!
         maxInimigos: 5,
@@ -142,10 +143,11 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
+        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0))
 
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
-          <p><strong>Duration:</strong> ${skill.duracaoBase}s (Modified by Duration Boost)</p>
+          <p><strong>Duration:</strong> ${skill.duracaoFinal.toFixed(1)}s (${duration} Duration boost${duration !== 1 ? 's' : ''})</p>
           <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft (${range} Range boost${range !== 1 ? 's' : ''})</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
