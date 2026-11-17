@@ -148,14 +148,14 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0)); 
-
+        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0));
+        
         // CORREÇÃO AQUI: Calcula a energia subtraindo o bônus de dano se a skill tiver essa propriedade
         const reducaoDanoEnergia = dmg * (skill.reducaoEnergiaPorDamage || 0);
         const energiaFinal = (skill.energiaBase || 0) - reducaoDanoEnergia;
 
         corpoHTML = `
-          <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
+          <p><strong>Energy Cost:</strong> ${energiaFinal} ${dmg > 0 ? `(${dmg} Damage boost${dmg !== 1 ? 's' : ''} reduced cost)` : ''}</p>
           <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s (${duration} Duration boost${duration !== 1 ? 's' : ''})</p>
           <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft (${range} Range boost${range !== 1 ? 's' : ''})</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
@@ -163,15 +163,15 @@
       }
 
       // CORREÇÃO AQUI: Transforma o array de notas em texto HTML formatado
-      const notasHTML = array.isArray(skill.notasFixas)
-      ? skill.notasFixas.map(n => `📌 ${n}`).join('<br>')
-      : `📌 ${skill.notaFixa || ''}`;
+      const notasHTML = Array.isArray(skill.notasFixas) 
+        ? skill.notasFixas.map(n => `📌 ${n}`).join('<br>') 
+        : `📌 ${skill.notaFixa || ''}`;
 
       caixa.innerHTML = `
         <span class="tag">${skill.heroi} — ${totalBoosts}/5 Boosts</span>
         ${corpoHTML}
-        <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency</p>
-        <p style="color:#8b949e; font-size:13px;">📌 ${skill.notaFixa}</p>
+        <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency / +${dmg} Damage</p>
+        <p style="color:#8b949e; font-size:13px;">${notasHTML}</p>
         ${alertas}
       `;
     }
