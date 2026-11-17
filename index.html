@@ -81,12 +81,17 @@
         multCritico: 0,
         speedCapAlerta: 99,
         energiaBase: 253,
+        reducaoEnergiaPorDamage: 38, // <--- O delta exato de redução por Damage Boost nível 7!
         duracaoBase: 4.0,
         ganhoPorDuration: 3.2, // <--- o ganho exato por boost de Duration nível 7!
         raioBase: 12.0,
         ganhoPorRange: 7.4, // <--- 0 ganho exato por boost de range nível 7!
         maxInimigos: 5,
-        notaFixa: "Crowd control skill. Range and Duration boosts looks better here!"
+        // transformando em array para aceitar várias notas:
+        notasFixas: [
+        "Crowd control skill. Range and Duration boosts looks great here!",
+        "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63)."
+       ]
       }
     };
 
