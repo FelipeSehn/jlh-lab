@@ -48,7 +48,7 @@
   <div class="card" id="resultado"></div>
 
   <script>
-    // =========================================================================
+  // =========================================================================
     // 1. Game DATABASE (Add new tested skills here!)
     // =========================================================================
     const BANCO_DE_SKILLS = {
@@ -59,7 +59,7 @@
         ganhoPorDamage: 85,
         canCrit: true,
         multCritico: 2.95,
-        speedCapAlerta: 3, // Avisa a partir de 3 gemas de speed (160%)
+        speedCapAlerta: 3,
         notaFixa: "Validated optimal build: 1 Damage + 2 Luck + 2 Speed (308 / 895 at 140%)"
       },
       ww_ricochet: {
@@ -72,16 +72,19 @@
         speedCapAlerta: 99,
         notaFixa: "Flag CanCrit = FALSE. Focus 100% on Damage (2610 flat with 5 boosts)."
       },
-      // MODELO PRONTO PARA O PRÓXIMO TESTE:
-      flash_flurry: {
-        heroi: "The Flash (Testing)",
-        nome: "Flurry / Rapid Punch",
-        pisoDano: 100,       // <-- Replace with 0-gem base damage measured in-game!
-        ganhoPorDamage: 40,  // <-- Replace with delta from adding 1 Damage gem!
+      ww_lasso: {
+        heroi: "Wonder Woman",
+        nome: "Lasso Capture",
+        pisoDano: 0,
+        ganhoPorDamage: 0,
         canCrit: true,
-        multCritico: 3.0,
+        multCritico: 0,
         speedCapAlerta: 99,
-        notaFixa: "Collecting empirical lab data."
+        energiaBase: 253,
+        duracaoBase: 4.0,
+        raioBase: 12.0,
+        maxInimigos: 5,
+        notaFixa: "Control crowd skill. Range and Duration boost looks better here!"
       }
     };
 
@@ -113,26 +116,41 @@
         return;
       }
 
-      const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
-      const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
-      const attackSpeed = 100 + (speed * 20);
       let alertas = "";
+      let corpoHTML = "";
 
-      if (!skill.canCrit && luck > 0) {
-        alertas += "<p class='alerta'>⚠️ Wasted Slot: This skill cannot crit (CanCrit = False).</p>";
-      }
-      if (skill.canCrit && luck === 0) {
-        alertas += "<p class='alerta'>⚠️ Crit Disabled: 0 luck boosts = 0% crit chance.</p>";
-      }
-      if (speed >= skill.speedCapAlerta) {
-        alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
+      if (skill.pisoDano > 0) {
+        const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
+        const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
+        const attackSpeed = 100 + (speed * 20);
+
+        if (!skill.canCrit && luck > 0) {
+          alertas += "<p class='alerta'>⚠️ Wasted Slot: This skill cannot crit (CanCrit = False).</p>";
+        }
+        if (skill.canCrit && luck === 0) {
+          alertas += "<p class='alerta'>⚠️ Crit Disabled: 0 luck boosts = 0% crit chance.</p>";
+        }
+        if (speed >= skill.speedCapAlerta) {
+          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
+        }
+
+        corpoHTML = `
+          <p><strong>Normal Damage:</strong> ${danoNormal}</p>
+          <p><strong>Critical Damage:</strong> ${danoCritico > 0 ? danoCritico : "N/A"}</p>
+          <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+        `;
+      } else {
+        corpoHTML = `
+          <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
+          <p><strong>Duration:</strong> ${skill.duracaoBase}s (Modified by Duration Boost)</p>
+          <p><strong>Capture Radius:</strong> ${skill.raioBase} ft (Modified by Range Boost)</p>
+          <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
+        `;
       }
 
       caixa.innerHTML = `
-        <span class="tag">${skill.heroi} • ${totalBoosts}/5 Boosts</span>
-        <p><strong>Normal Damage:</strong> ${danoNormal}</p>
-        <p><strong>Critical Damage:</strong> ${danoCritico > 0 ? danoCritico : "N/A"}</p>
-        <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+        <span class="tag">${skill.heroi} — ${totalBoosts}/5 Boosts</span>
+        ${corpoHTML}
         <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency</p>
         <p style="color:#8b949e; font-size:13px;">📌 ${skill.notaFixa}</p>
         ${alertas}
