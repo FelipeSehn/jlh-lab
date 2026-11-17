@@ -85,13 +85,15 @@
         reducaoEnergiaPorDamage: 38, // <--- O delta exato de redução por Damage Boost nível 7!
         duracaoBase: 4.0,
         ganhoPorDuration: 3.2, // <--- o ganho exato por boost de Duration nível 7!
+        ganhoPorSpeedDuration: 1.8, // <--- 0 acréscimo de duração oculto por Speed Boost nível 7!
         raioBase: 12.0,
         ganhoPorRange: 7.4, // <--- 0 ganho exato por boost de range nível 7!
         maxInimigos: 5,
         // transformando em array para aceitar várias notas:
         notasFixas: [
         "Crowd control skill. Range and Duration boosts looks great here!",
-        "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63)."
+        "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63).",
+        "Tested with level 7 Speed Boosts: Secretly scales duration (1.8s per boost) alongside regular duration boosts!",
        ]
       }
     };
@@ -149,7 +151,10 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0));
+
+        // A duração agora soma o Duration Boost (+3.2) E o Speed Boost (+1.8) se a skill tiver essa propriedade
+        const ganhoDuracaoTotal = (duration * (skill.ganhoPorDuration || 0)) + (speed * (skill.ganhoPorSpeedDuration || 0));
+        const duracaoFinal = skill.duracaoBase + ganhoDuracaoTotal;
         
         // CORREÇÃO AQUI: Calcula a energia subtraindo o bônus de dano se a skill tiver essa propriedade
         const reducaoDanoEnergia = dmg * (skill.reducaoEnergiaPorDamage || 0);
