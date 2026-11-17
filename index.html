@@ -75,6 +75,7 @@
       ww_lasso: {
         heroi: "Wonder Woman",
         nome: "Lasso Capture",
+        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture mutiple enemies at once, pulling them together in a group.",
         pisoDano: 0,
         ganhoPorDamage: 0,
         canCrit: true,
@@ -169,6 +170,8 @@
 
       caixa.innerHTML = `
         <span class="tag">${skill.heroi} — ${totalBoosts}/5 Boosts</span>
+        <h3 style="margin: 8px 0; color: #58a6ff; font-size: 16px;">${skill.nome}</h3>
+        ${skill.descricao ? `<p style="color: #8b949e; font-style: italic; font-size: 13px; margin-bottom: 12px/">"${skill.descricao}"</p>` : ''}
         ${corpoHTML}
         <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency / +${dmg} Damage</p>
         <p style="color:#8b949e; font-size:13px;">${notasHTML}</p>
