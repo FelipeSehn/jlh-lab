@@ -143,11 +143,11 @@
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0))
+        const duracaoFinal = skill.duracaoBase + (duration * (skill.ganhoPorDuration || 0)); // <--- Ponto e vírgula adicionado aqui!
 
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${skill.energiaBase}</p>
-          <p><strong>Duration:</strong> ${skill.duracaoFinal.toFixed(1)}s (${duration} Duration boost${duration !== 1 ? 's' : ''})</p>
+          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s (${duration} Duration boost${duration !== 1 ? 's' : ''})</p> <-- fixed here
           <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft (${range} Range boost${range !== 1 ? 's' : ''})</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
