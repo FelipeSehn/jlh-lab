@@ -85,7 +85,7 @@
           damage: [1363, 1772, 2181, 2590, 2999, 3407],
           speed: [100, 120, 140, 160, 180, 200],
           luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0],
-          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0], // Stun duration sec
+          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
           rangeEnergy: [377, 320, 264, 207, 151, 94],
           effEnergy: [377, 226, 75, 63, 63, 63]
         },
@@ -103,12 +103,12 @@
         nome: "Ricochet",
         descricao: "Wonder Woman throws her magic tiara like a boomerang, hitting one or more targets before returning to her.",
         pisoDano: 1044,
-        ganhoPorSpeedDano: 83.5,
         canCrit: true,
-        multCritico: 1.8,
+        multCritico: 3.0, // Corrigido para o multiplicador real de 3x (dado confirmado: 1987 vira 5963)
         speedCapAlerta: 99,
         tabelas: {
           damage: [1044, 1357, 1670, 1984, 2297, 2610],
+          speedDano: [1044, 1128, 1211, 1295, 1378, 1462], // Valores exatos com speed boost
           duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
           rangeEnergy: [348, 296, 244, 191, 139, 87],
           effEnergy: [348, 348, 209, 70, 58, 58],
@@ -116,11 +116,12 @@
         },
         notasFixas: [
           "Base normal damage: 1044 (+313 per Damage boost, max 2610).",
-          "⚡ Speed Scaling: Speed boosts increase damage (+83.5/boost, max 1462).",
-          "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%).",
-          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost.",
+          "⚡ Speed Scaling: Speed boosts increase damage up to 1462.",
+          "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%) with a massive 3.0x Crit Multiplier!",
+          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (max 14.0s).",
           "🎯 Range Scaling: Reduces Energy Cost (-52/boost, base 348 -> 87 max).",
-          "🔋 Efficiency Curve: Drops cost (348 -> 209 -> 70 -> 58 -> 58)."
+          "🔋 Efficiency Curve: Drops cost (348 -> 209 -> 70 -> 58 -> 58).",
+          "🛡️ Chance to Disarm: Fixed at 45.0% | Chance of Stun: 19.0%."
         ]
       },
       ww_spin: {
@@ -256,6 +257,7 @@
         if (skillId === "ww_flying") {
           energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 377);
         } else if (skillId === "ww_ricochet") {
+          if (speed > 0) danoNormal = skill.tabelas.speedDano[speed];
           energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 348);
         } else if (skillId === "ww_spin") {
           energiaCalculada = duration > 0 ? skill.tabelas.durationEnergy[duration] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 117);
@@ -267,7 +269,7 @@
         const speedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : (skillId === "ww_spin" ? skill.tabelas.speed[speed] : (skillId === "ww_snare" ? skill.tabelas.speedImpact[speed] : 100));
         const rangeVal = skillId === "ww_spin" ? skill.tabelas.range[range] : (skillId === "ww_snare" ? skill.tabelas.range[range] : 24.0);
         const stunSecVal = skill.tabelas.duration ? skill.tabelas.duration[duration] : 2.0;
-        const stunChanceVal = skillId === "ww_snare" ? skill.tabelas.stunChance[duration] : 25.0;
+        const stunChanceVal = skillId === "ww_snare" ? skill.tabelas.stunChance[duration] : 19.0;
         const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
         if (skillId === "ww_flying") {
@@ -290,10 +292,11 @@
           `;
         } else if (skillId === "ww_ricochet") {
           corpoHTML = `
-            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
+            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''} ${speed > 0 ? `(${speed} Spd Dmg)` : ''}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Stun Duration:</strong> ${stunSecVal}s</p>
-            <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
+            <p><strong>Chance of Stun:</strong> 19.0% | <strong>Chance to Disarm:</strong> 45.0%</p>
+            <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico} [3.0x Multiplier])` : ''}</p>
           `;
         } else if (skillId === "ww_snare") {
           corpoHTML = `
