@@ -84,7 +84,7 @@
         descricao: "Wonder Woman throws her magic tiara like a boomerang, hitting one or more targets before returning to her.",
         pisoDano: 1044,
         ganhoPorSpeedDano: 83.5,
-        canCrit: true, // Corrigido: Agora dá crítico de verdade!
+        canCrit: true,
         multCritico: 1.8,
         speedCapAlerta: 99,
         tabelas: {
@@ -92,7 +92,7 @@
           duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
           rangeEnergy: [348, 296, 244, 191, 139, 87],
           effEnergy: [348, 348, 209, 70, 58, 58],
-          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0] // Luck ativado e funcional
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0]
         },
         notasFixas: [
           "Base normal damage: 1044 (+313 per Damage boost, max 2610).",
@@ -125,6 +125,31 @@
           "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%).",
           "🎯 Range Scaling: Increases Capture Range (+6.72 ft per boost, max 57.6 ft).",
           "🔋 Efficiency & Duration Curves: Both drop energy cost down to an ultra-cheap floor of 20."
+        ]
+      },
+      ww_snare: {
+        heroi: "Wonder Woman",
+        nome: "Lasso Snare",
+        descricao: "Using her magic lariat, Wonder Woman captures her foe and reels him in for an effective melee attack.",
+        pisoDano: 1421,
+        canCrit: true,
+        multCritico: 1.8,
+        speedCapAlerta: 99,
+        tabelas: {
+          damage: [1421, 1847, 2274, 2700, 3126, 3552],
+          speedImpact: [400, 680, 960, 1240, 1520, 1800], // Impact Force %
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0], // Crit %
+          stunChance: [5.0, 30.0, 55.0, 80.0, 105.0, 130.0], // Stun %
+          range: [29.0, 37.1, 45.2, 53.4, 61.5, 69.6], // Snare distance ft
+          effEnergy: [261, 157, 52, 44, 44, 44] // Energy Cost com Efficiency
+        },
+        notasFixas: [
+          "Base damage: 1421 (+426.2 per Damage boost, max 3552).",
+          "⚡ Speed Scaling: Massively scales Impact Force (+280% per boost, max 1800%).",
+          "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%).",
+          "⏱️ Duration/Stun Scaling: Adds +25% Stun Chance per boost (max 130%).",
+          "🎯 Range Scaling: Extends Snare Distance (+8.12 ft per boost, max 69.6 ft).",
+          "🔋 Efficiency Curve: Drops energy cost down to a floor of 44."
         ]
       },
       ww_lasso: {
@@ -184,7 +209,7 @@
 
       if (skill.pisoDano > 0) {
         let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
-        let energiaCalculada = 0;
+        let energiaCalculada = 261;
 
         if (skillId === "ww_ricochet") {
           if (speed > 0) danoNormal += Math.round(speed * skill.ganhoPorSpeedDano);
@@ -193,17 +218,29 @@
           energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 377);
         } else if (skillId === "ww_spin") {
           energiaCalculada = duration > 0 ? skill.tabelas.durationEnergy[duration] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 117);
+        } else if (skillId === "ww_snare") {
+          energiaCalculada = efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 261;
         }
 
         const critChanceVal = skill.tabelas.luck ? skill.tabelas.luck[luck] : 0;
-        const speedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : (skillId === "ww_spin" ? skill.tabelas.speed[speed] : 100);
-        const rangeVal = skillId === "ww_spin" ? skill.tabelas.range[range] : 24.0;
+        const speedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : (skillId === "ww_spin" ? skill.tabelas.speed[speed] : (skillId === "ww_snare" ? skill.tabelas.speedImpact[speed] : 100));
+        const rangeVal = skillId === "ww_spin" ? skill.tabelas.range[range] : (skillId === "ww_snare" ? skill.tabelas.range[range] : 24.0);
+        const stunChanceVal = skillId === "ww_snare" ? skill.tabelas.stunChance[duration] : 5.0;
         const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
-        if (skillId === "ww_spin") {
+        if (skillId === "ww_snare") {
+          corpoHTML = `
+            <p><strong>Melee Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+            <p><strong>Impact Force:</strong> ${speedVal}%</p>
+            <p><strong>Snare Distance:</strong> ${rangeVal} ft</p>
+            <p><strong>Chance of Stun:</strong> ${stunChanceVal}%</p>
+            <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
+          `;
+        } else if (skillId === "ww_spin") {
           corpoHTML = `
             <p><strong>Impact Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
-            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${duration > 0 ? `(Duration Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Spin Rate:</strong> ${speedVal}%</p>
             <p><strong>Capture Range:</strong> ${rangeVal} ft</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
@@ -211,24 +248,20 @@
           `;
         } else if (skillId === "ww_ricochet") {
           corpoHTML = `
-            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''} ${speed > 0 ? `(${speed} Spd Dmg)` : ''}</p>
+            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Stun Duration:</strong> ${(2.0 + duration * 2.4).toFixed(1)}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
-            <p><strong>Chance of Stun:</strong> 19.0% | <strong>Disarm:</strong> 45.0%</p>
           `;
         } else if (skillId === "ww_flying") {
           corpoHTML = `
             <p><strong>Damage:</strong> ${danoNormal}/sec</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Attack Speed:</strong> ${speedVal}%</p>
-            <p><strong>Stun Duration:</strong> ${(2.0 + duration * 2.4).toFixed(1)}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
-            <p><strong>Chance of Stun:</strong> 25.0%</p>
           `;
         }
       } else {
-        // Lasso Capture
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
         let energiaLasso = efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : (dmg > 0 ? skill.tabelas.dmgEnergy[dmg] : 253);
 
