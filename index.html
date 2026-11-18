@@ -48,7 +48,6 @@
   <div class="card" id="resultado"></div>
 
   <script>
-    // BANCO DE DADOS GLOBAL DE HERÓIS (Nível 20 Máximo)
     const BANCO_DE_HEROIS = {
       "Wonder Woman": { vida: "5445 / 5445", energia: "2251 / 2251", nivel: 20 }
     };
@@ -59,24 +58,22 @@
         nome: "Flying Charge",
         descricao: "Wonder Woman charges forward damaging all enemies in her path.",
         pisoDano: 1363,
-        ganhoPorDamage: 409,
         canCrit: true,
         multCritico: 1.8,
         speedCapAlerta: 3,
-        // Tabelas exatas extraídas dos seus dados (de 0 a 5 boosts)
         tabelas: {
           damage: [1363, 1772, 2181, 2590, 2999, 3407],
-          speed: [100, 120, 140, 160, 180, 200], // Attack Speed %
-          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0], // Crit %
-          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0], // Stun sec
-          rangeEnergy: [377, 320, 264, 207, 151, 94], // Energy Cost com Range
-          effEnergy: [377, 226, 75, 63, 63, 63] // Energy Cost com Efficiency
+          speed: [100, 120, 140, 160, 180, 200],
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0],
+          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
+          rangeEnergy: [377, 320, 264, 207, 151, 94],
+          effEnergy: [377, 226, 75, 63, 63, 63]
         },
         notasFixas: [
           "Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
-          "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max). Watch out for hitbox pass-through at 160%+!",
+          "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max).",
           "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (Base 0% -> 40% max).",
-          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
+          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost.",
           "🎯 Range Scaling: Reduces Energy Cost (-56/boost, base 377 -> 94 max).",
           "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts."
         ]
@@ -86,7 +83,6 @@
         nome: "Ricochet",
         descricao: "Wonder Woman throws her magic tiara like a boomerang, hitting one or more targets before returning to her.",
         pisoDano: 1044,
-        ganhoPorDamage: 313,
         ganhoPorSpeedDano: 83.5,
         canCrit: false,
         multCritico: 1,
@@ -101,16 +97,40 @@
         notasFixas: [
           "Base normal damage: 1044 (+313 per Damage boost, max 2610).",
           "⚡ Speed Scaling: Speed boosts increase damage (+83.5/boost, max 1462).",
-          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
+          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost.",
           "🎯 Range Scaling: Reduces Energy Cost (-52/boost, base 348 -> 87 max).",
           "🔋 Efficiency Curve: Drops cost (348 -> 209 -> 70 -> 58 -> 58).",
-          "⚠️ TRAP WARNING: Luck boosts falsely inflate simulated crit up to 40.0%, but engine hard-caps actual crit at 0%!"
+          "⚠️ TRAP WARNING: Luck boosts falsely inflate simulated crit up to 40.0%!"
+        ]
+      },
+      ww_spin: {
+        heroi: "Wonder Woman",
+        nome: "Lasso Spin",
+        descricao: "Using the magic lasso, Wonder Woman captures a foe and swings him around, turning him into an effective weapon against his comrades.",
+        pisoDano: 877,
+        canCrit: true,
+        multCritico: 1.8,
+        speedCapAlerta: 99,
+        tabelas: {
+          damage: [877, 1141, 1404, 1667, 1930, 2194],
+          speed: [180, 216, 252, 288, 324, 360], // Spin rate %
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0], // Crit %
+          range: [24.0, 30.7, 37.4, 44.2, 50.9, 57.6], // Capture range ft
+          durationEnergy: [117, 84, 51, 20, 20, 20], // Energy Cost com Duration
+          effEnergy: [117, 70, 23, 20, 20, 20] // Energy Cost com Efficiency
+        },
+        notasFixas: [
+          "Base impact damage: 877 (+263 per Damage boost, max 2194).",
+          "🌪️ Speed Scaling: Increases Spin Rate (+36% per boost, max 360%).",
+          "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%).",
+          "🎯 Range Scaling: Increases Capture Range (+6.72 ft per boost, max 57.6 ft).",
+          "🔋 Efficiency & Duration Curves: Both drop energy cost down to an ultra-cheap floor of 20."
         ]
       },
       ww_lasso: {
         heroi: "Wonder Woman",
         nome: "Lasso Capture",
-        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture multiple enemies at once, pulling them together in a group.",
+        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time.",
         pisoDano: 0,
         canCrit: true,
         multCritico: 0,
@@ -119,14 +139,14 @@
         ganhoPorRange: 7.4,
         maxInimigos: 5,
         tabelas: {
-          dmgEnergy: [253, 215, 177, 139, 101, 63], // Reduz energia com Damage
-          effEnergy: [253, 253, 152, 51, 42, 42], // Reduz energia com Efficiency
-          duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0] // Estimativa base + duracao
+          dmgEnergy: [253, 215, 177, 139, 101, 63],
+          effEnergy: [253, 253, 152, 51, 42, 42],
+          duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0]
         },
         notasFixas: [
           "Crowd control skill. Range and Duration boosts look great here!",
-          "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63).",
-          "Tested with level 7 Efficiency Boosts: Drips Energy cost down rapidly (down to 42)."
+          "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly down to 63.",
+          "Tested with level 7 Efficiency Boosts: Drops energy cost down to 42."
         ]
       }
     };
@@ -165,70 +185,55 @@
       if (skill.pisoDano > 0) {
         let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
         let energiaCalculada = 0;
-        let stunDurationFinal = skill.tabelas.duration ? skill.tabelas.duration[duration] : 2.0;
 
         if (skillId === "ww_ricochet") {
-          if (speed > 0) {
-            danoNormal += Math.round(speed * skill.ganhoPorSpeedDano);
-          }
-          energiaCalculada = 348;
-          if (range > 0) {
-            energiaCalculada = skill.tabelas.rangeEnergy[range];
-          } else if (efficiency > 0) {
-            energiaCalculada = skill.tabelas.effEnergy[efficiency];
-          }
+          if (speed > 0) danoNormal += Math.round(speed * skill.ganhoPorSpeedDano);
+          energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 348);
         } else if (skillId === "ww_flying") {
-          energiaCalculada = 377;
-          if (range > 0) {
-            energiaCalculada = skill.tabelas.rangeEnergy[range];
-          } else if (efficiency > 0) {
-            energiaCalculada = skill.tabelas.effEnergy[efficiency];
-          }
+          energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 377);
+        } else if (skillId === "ww_spin") {
+          energiaCalculada = duration > 0 ? skill.tabelas.durationEnergy[duration] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 117);
         }
 
         let fakeCritChance = 0;
         if (skillId === "ww_ricochet") {
           fakeCritChance = skill.tabelas.luckFake[luck];
-          if (luck > 0) {
-            alertas += `<p class='erro'>⚠️ LUCK TRAP TRIGGERED: Simulated Crit is ${fakeCritChance.toFixed(1)}%, but actual engine output remains 0.0% (Wasted Stat)!</p>`;
-          }
+          if (luck > 0) alertas += `<p class='erro'>⚠️ LUCK TRAP TRIGGERED: Simulated Crit is ${fakeCritChance.toFixed(1)}%, but actual engine output remains 0.0%!</p>`;
         }
 
-        const critChanceFlying = skillId === "ww_flying" ? skill.tabelas.luck[luck] : 0;
-        const attackSpeedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : 100;
-        const danoCritico = (skill.canCrit && skillId === "ww_flying" && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
+        const critChanceVal = (skillId === "ww_flying" || skillId === "ww_spin") ? skill.tabelas.luck[luck] : 0;
+        const speedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : (skillId === "ww_spin" ? skill.tabelas.speed[speed] : 100);
+        const rangeVal = skillId === "ww_spin" ? skill.tabelas.range[range] : 24.0;
+        const danoCritico = (skill.canCrit && (skillId === "ww_flying" || skillId === "ww_spin") && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
-        if (speed >= skill.speedCapAlerta && skillId === "ww_flying") {
-          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
-        }
-
-        if (skillId === "ww_ricochet") {
+        if (skillId === "ww_spin") {
           corpoHTML = `
-            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''} ${speed > 0 ? `(${speed} Spd Dmg)` : ''}</p>
+            <p><strong>Impact Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${duration > 0 ? `(Duration Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+            <p><strong>Spin Rate:</strong> ${speedVal}%</p>
+            <p><strong>Capture Range:</strong> ${rangeVal} ft</p>
+            <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
+            <p><strong>Damage to Captive:</strong> 49/hit</p>
+          `;
+        } else if (skillId === "ww_ricochet") {
+          corpoHTML = `
+            <p><strong>Normal Damage:</strong> ${danoNormal}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
-            <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
-            <p><strong>Chance of Critical Hit:</strong> ${fakeCritChance.toFixed(1)}% <span style="color:#f85149;">(Fake/No Effect)</span></p>
-            <p><strong>Chance of Stun:</strong> 19.0% | <strong>Disarm:</strong> 45.0%</p>
+            <p><strong>Stun Duration:</strong> ${(2.0 + duration * 2.4).toFixed(1)}s</p>
+            <p><strong>Chance of Critical Hit:</strong> ${fakeCritChance.toFixed(1)}% <span style="color:#f85149;">(Fake)</span></p>
           `;
         } else if (skillId === "ww_flying") {
           corpoHTML = `
             <p><strong>Damage:</strong> ${danoNormal}/sec</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
-            <p><strong>Attack Speed:</strong> ${attackSpeedVal}%</p>
-            <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
-            <p><strong>Chance of Critical Hit:</strong> ${critChanceFlying.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
-            <p><strong>Chance of Stun:</strong> 25.0%</p>
+            <p><strong>Attack Speed:</strong> ${speedVal}%</p>
+            <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
           `;
         }
       } else {
         // Lasso Capture
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        let energiaLasso = 253;
-        if (efficiency > 0) {
-          energiaLasso = skill.tabelas.effEnergy[efficiency];
-        } else if (dmg > 0) {
-          energiaLasso = skill.tabelas.dmgEnergy[dmg];
-        }
+        let energiaLasso = efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : (dmg > 0 ? skill.tabelas.dmgEnergy[dmg] : 253);
 
         corpoHTML = `
           <p><strong>Energy Cost:</strong> ${energiaLasso}</p>
@@ -246,7 +251,7 @@
         <h3 style="margin: 8px 0; color: #58a6ff; font-size: 16px;">${skill.nome}</h3>
         ${skill.descricao ? `<p style="color: #8b949e; font-style: italic; font-size: 13px; margin-bottom: 12px;">"${skill.descricao}"</p>` : ''}
         ${corpoHTML}
-        <p><strong>Active Boosts:</strong> +${dmg} Damage / +${luck} Luck / +${speed} Speed / +${duration} Duration / +${range} Range / +${efficiency} Efficiency</p>
+        <p><strong>Active Boosts:</strong> +${dmg} Dmg / +${luck} Luck / +${speed} Spd / +${duration} Dur / +${range} Rng / +${efficiency} Eff</p>
         <p style="color:#8b949e; font-size:13px; margin-top:10px;">${notasHTML}</p>
         ${alertas}
       `;
