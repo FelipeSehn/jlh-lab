@@ -2,11 +2,11 @@
 <html lang="en-US">
 <head>
   <meta charset="UTF-8">
-  <title>JLH Lab (v0.1) — Justice League Heroes Technical Lab</title>
+  <title>JLH Lab (v0.2) — Justice League Heroes Technical Lab</title>
   <style>
     body { font-family: 'Segoe UI', sans-serif; background: #0f1115; color: #e6edf3; padding: 20px; max-width: 540px; margin: auto; }
     h2 { border-bottom: 1px solid #30363d; padding-bottom: 10px; color: #58a6ff; }
-    .version-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; background: rgba(255, 193, 7, 0.14); color: #ffd54f; border: 1px solid rgba(255, 193, 7, 0.35); margin-bottom: 10px; }
+    .version-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; background: rgba(88, 166, 255, 0.14); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.35); margin-bottom: 10px; }
     label { display: block; margin-top: 12px; font-size: 14px; color: #8b949e; }
     select, input, button { width: 100%; padding: 10px; margin-top: 5px; font-size: 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #fff; box-sizing: border-box; }
     button { background: #238636; border: none; font-weight: bold; cursor: pointer; margin-top: 18px; }
@@ -20,7 +20,7 @@
 <body>
 
   <h2>⚡ JLH Lab — Build Engineering</h2>
-  <div class="version-badge">v0.1 — Early Access / Work in Progress</div>
+  <div class="version-badge">v0.2 — Database Core Integrated</div>
 
   <label>Hero & Ability (Database):</label>
   <select id="skillSelect"></select>
@@ -48,6 +48,11 @@
   <div class="card" id="resultado"></div>
 
   <script>
+    // BANCO DE DADOS GLOBAL DE HERÓIS (Nível 20 Máximo)
+    const BANCO_DE_HEROIS = {
+      "Wonder Woman": { vida: "5445 / 5445", energia: "2251 / 2251", nivel: 20 }
+    };
+
     const BANCO_DE_SKILLS = {
       ww_flying: {
         heroi: "Wonder Woman",
@@ -58,13 +63,22 @@
         canCrit: true,
         multCritico: 1.8,
         speedCapAlerta: 3,
+        // Tabelas exatas extraídas dos seus dados (de 0 a 5 boosts)
+        tabelas: {
+          damage: [1363, 1772, 2181, 2590, 2999, 3407],
+          speed: [100, 120, 140, 160, 180, 200], // Attack Speed %
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0], // Crit %
+          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0], // Stun sec
+          rangeEnergy: [377, 320, 264, 207, 151, 94], // Energy Cost com Range
+          effEnergy: [377, 226, 75, 63, 63, 63] // Energy Cost com Efficiency
+        },
         notasFixas: [
           "Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
           "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max). Watch out for hitbox pass-through at 160%+!",
           "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (Base 0% -> 40% max).",
           "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
           "🎯 Range Scaling: Reduces Energy Cost (-56/boost, base 377 -> 94 max).",
-          "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts (Curve: 377 -> 226 -> 75 -> 63 -> 63 -> 63)."
+          "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts."
         ]
       },
       ww_ricochet: {
@@ -77,6 +91,13 @@
         canCrit: false,
         multCritico: 1,
         speedCapAlerta: 99,
+        tabelas: {
+          damage: [1044, 1357, 1670, 1984, 2297, 2610],
+          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
+          rangeEnergy: [348, 296, 244, 191, 139, 87],
+          effEnergy: [348, 348, 209, 70, 58, 58],
+          luckFake: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0]
+        },
         notasFixas: [
           "Base normal damage: 1044 (+313 per Damage boost, max 2610).",
           "⚡ Speed Scaling: Speed boosts increase damage (+83.5/boost, max 1462).",
@@ -91,24 +112,21 @@
         nome: "Lasso Capture",
         descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture multiple enemies at once, pulling them together in a group.",
         pisoDano: 0,
-        ganhoPorDamage: 0,
         canCrit: true,
         multCritico: 0,
         speedCapAlerta: 99,
-        energiaBase: 253,
-        reducaoEnergiaPorDamage: 38,
-        duracaoBase: 4.0,
-        ganhoPorDuration: 3.2,
-        ganhoPorSpeedDuration: 1.8,
-        ganhoPorLuckDuration: 1.8,
         raioBase: 12.0,
         ganhoPorRange: 7.4,
         maxInimigos: 5,
+        tabelas: {
+          dmgEnergy: [253, 215, 177, 139, 101, 63], // Reduz energia com Damage
+          effEnergy: [253, 253, 152, 51, 42, 42], // Reduz energia com Efficiency
+          duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0] // Estimativa base + duracao
+        },
         notasFixas: [
           "Crowd control skill. Range and Duration boosts look great here!",
           "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63).",
-          "Tested with level 7 Speed & Luck Boosts: Both secretly scale duration (1.8s per boost)!",
-          "Tested with level 7 Efficiency Boosts: Drips Energy cost down rapidly (1->152, 2->51, 3->42, 4->42, 5->42)."
+          "Tested with level 7 Efficiency Boosts: Drips Energy cost down rapidly (down to 42)."
         ]
       }
     };
@@ -124,6 +142,7 @@
     function calcular() {
       const skillId = select.value;
       const skill = BANCO_DE_SKILLS[skillId];
+      const dadosHeroi = BANCO_DE_HEROIS[skill.heroi];
       
       const dmg = Number(document.getElementById("dmg").value) || 0;
       const luck = Number(document.getElementById("luck").value) || 0;
@@ -144,9 +163,9 @@
       let corpoHTML = "";
 
       if (skill.pisoDano > 0) {
-        let danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
+        let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
         let energiaCalculada = 0;
-        let stunDurationFinal = 2.0 + (duration * 2.4);
+        let stunDurationFinal = skill.tabelas.duration ? skill.tabelas.duration[duration] : 2.0;
 
         if (skillId === "ww_ricochet") {
           if (speed > 0) {
@@ -154,78 +173,65 @@
           }
           energiaCalculada = 348;
           if (range > 0) {
-            const tabelaRangeEnergy = [348, 296, 244, 191, 139, 87];
-            energiaCalculada = tabelaRangeEnergy[range] !== undefined ? tabelaRangeEnergy[range] : 87;
+            energiaCalculada = skill.tabelas.rangeEnergy[range];
           } else if (efficiency > 0) {
-            const tabelaEffEnergy = [348, 348, 209, 70, 58, 58];
-            energiaCalculada = tabelaEffEnergy[efficiency] !== undefined ? tabelaEffEnergy[efficiency] : 58;
+            energiaCalculada = skill.tabelas.effEnergy[efficiency];
           }
         } else if (skillId === "ww_flying") {
           energiaCalculada = 377;
           if (range > 0) {
-            const tabelaRangeFlying = [377, 320, 264, 207, 151, 94];
-            energiaCalculada = tabelaRangeFlying[range] !== undefined ? tabelaRangeFlying[range] : 94;
+            energiaCalculada = skill.tabelas.rangeEnergy[range];
           } else if (efficiency > 0) {
-            const tabelaEffFlying = [377, 226, 75, 63, 63, 63];
-            energiaCalculada = tabelaEffFlying[efficiency] !== undefined ? tabelaEffFlying[efficiency] : 63;
+            energiaCalculada = skill.tabelas.effEnergy[efficiency];
           }
         }
 
-        // Tratamento de Crítico e Armadilhas
         let fakeCritChance = 0;
         if (skillId === "ww_ricochet") {
-          fakeCritChance = luck * 8.0;
+          fakeCritChance = skill.tabelas.luckFake[luck];
           if (luck > 0) {
             alertas += `<p class='erro'>⚠️ LUCK TRAP TRIGGERED: Simulated Crit is ${fakeCritChance.toFixed(1)}%, but actual engine output remains 0.0% (Wasted Stat)!</p>`;
           }
         }
 
-        const critChanceFlying = skillId === "ww_flying" ? (luck * 8.0) : 0;
+        const critChanceFlying = skillId === "ww_flying" ? skill.tabelas.luck[luck] : 0;
+        const attackSpeedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : 100;
         const danoCritico = (skill.canCrit && skillId === "ww_flying" && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
         if (speed >= skill.speedCapAlerta && skillId === "ww_flying") {
           alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
         }
 
-        // Renderização específica por skill de dano
         if (skillId === "ww_ricochet") {
           corpoHTML = `
-            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(+${dmg} Dmg)` : ''} ${speed > 0 ? `(+${speed} Spd Dmg)` : ''}</p>
-            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+            <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''} ${speed > 0 ? `(${speed} Spd Dmg)` : ''}</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${fakeCritChance.toFixed(1)}% <span style="color:#f85149;">(Fake/No Effect)</span></p>
             <p><strong>Chance of Stun:</strong> 19.0% | <strong>Disarm:</strong> 45.0%</p>
           `;
         } else if (skillId === "ww_flying") {
-          const attackSpeed = 100 + (speed * 20);
           corpoHTML = `
             <p><strong>Damage:</strong> ${danoNormal}/sec</p>
-            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
-            <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
+            <p><strong>Attack Speed:</strong> ${attackSpeedVal}%</p>
             <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceFlying.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
             <p><strong>Chance of Stun:</strong> 25.0%</p>
           `;
         }
       } else {
-        // Bloco do Lasso Capture
+        // Lasso Capture
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        const ganhoDuracaoTotal = (duration * (skill.ganhoPorDuration || 0)) + 
-                                  (speed * (skill.ganhoPorSpeedDuration || 0)) + 
-                                  (luck * (skill.ganhoPorLuckDuration || 0));
-        const duracaoFinal = skill.duracaoBase + ganhoDuracaoTotal;
-        
-        let energiaCalculada = skill.energiaBase || 0;
-        if (efficiency > 0 && skillId === "ww_lasso") {
-          const tabelaEficiencia = [253, 152, 51, 42, 42, 42];
-          energiaCalculada = tabelaEficiencia[efficiency] !== undefined ? tabelaEficiencia[efficiency] : 42;
-        } else if (dmg > 0 && skill.reducaoEnergiaPorDamage) {
-          energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
+        let energiaLasso = 253;
+        if (efficiency > 0) {
+          energiaLasso = skill.tabelas.effEnergy[efficiency];
+        } else if (dmg > 0) {
+          energiaLasso = skill.tabelas.dmgEnergy[dmg];
         }
 
         corpoHTML = `
-          <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
-          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s</p>
+          <p><strong>Energy Cost:</strong> ${energiaLasso}</p>
           <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft</p>
           <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
@@ -236,7 +242,7 @@
         : `📌 ${skill.notaFixa || ''}`;
 
       caixa.innerHTML = `
-        <span class="tag">${skill.heroi} — ${totalBoosts}/5 Boosts</span>
+        <span class="tag">${skill.heroi} — Max HP: ${dadosHeroi.vida} | Max Energy: ${dadosHeroi.energia}</span>
         <h3 style="margin: 8px 0; color: #58a6ff; font-size: 16px;">${skill.nome}</h3>
         ${skill.descricao ? `<p style="color: #8b949e; font-style: italic; font-size: 13px; margin-bottom: 12px;">"${skill.descricao}"</p>` : ''}
         ${corpoHTML}
