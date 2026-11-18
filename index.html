@@ -56,11 +56,12 @@
         pisoDano: 1363,
         ganhoPorDamage: 409,
         canCrit: true,
-        multCritico: 2.0, // multiplicador padrão de crítico
+        multCritico: 1.8,
         speedCapAlerta: 3,
-        notasFixas: ["Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
+        notasFixas: [
+          "Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
           "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max). Watch out for hitbox pass-through at 160%+!",
-          "🍀Luck Scaling: Fully functional! Adds 8% crit chance per boost (Base 0% -> 14% max).",
+          "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (Base 0% -> 40% max).",
           "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
           "🎯 Range Scaling: Reduces Energy Cost (-56/boost, base 377 -> 94 max).",
           "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts (Curve: 377 -> 226 -> 75 -> 63 -> 63 -> 63)."
@@ -77,12 +78,12 @@
         multCritico: 1,
         speedCapAlerta: 99,
         notasFixas: [
-          "Base normal damage: 1044. Scales precisely +313 per Damage boost (Max: 2610).",
+          "Base normal damage: 1044 (+313 per Damage boost, max 2610).",
           "⚡ Speed Scaling: Speed boosts increase damage (+83.5/boost, max 1462).",
           "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
           "🎯 Range Scaling: Reduces Energy Cost (-52/boost, base 348 -> 87 max).",
           "🔋 Efficiency Curve: Drops cost (348 -> 209 -> 70 -> 58 -> 58).",
-          "⚠️ TRAP WARNING: Luck boosts falsely inflate the simulated crit chance up to 40.0% (8% per boost), but the engine hard-caps actual critical output at 0%. Do not waste slots on Luck!"
+          "⚠️ TRAP WARNING: Luck boosts falsely inflate simulated crit up to 40.0%, but engine hard-caps actual crit at 0%!"
         ]
       },
       ww_lasso: {
@@ -139,79 +140,82 @@
         return;
       }
 
-     let alertas = "";
+      let alertas = "";
       let corpoHTML = "";
 
       if (skill.pisoDano > 0) {
         let danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
-        let energiaRicochet = 348;
-        let stunDurationFinal = 2.0;
+        let energiaCalculada = 0;
+        let stunDurationFinal = 2.0 + (duration * 2.4);
 
-        // Regras exclusivas descobertas para o Ricochet
         if (skillId === "ww_ricochet") {
-          // Speed scale damage
           if (speed > 0) {
             danoNormal += Math.round(speed * skill.ganhoPorSpeedDano);
           }
-          // Duration scale stun duration (+2.4s per boost)
-          stunDurationFinal = 2.0 + (duration * 2.4);
-
-          // Range scale energy cost (348 down to 87, step ~52)
+          energiaCalculada = 348;
           if (range > 0) {
             const tabelaRangeEnergy = [348, 296, 244, 191, 139, 87];
-            energiaRicochet = tabelaRangeEnergy[range] !== undefined ? tabelaRangeEnergy[range] : 87;
-          }
-          // Efficiency scale energy cost
-          else if (efficiency > 0) {
+            energiaCalculada = tabelaRangeEnergy[range] !== undefined ? tabelaRangeEnergy[range] : 87;
+          } else if (efficiency > 0) {
             const tabelaEffEnergy = [348, 348, 209, 70, 58, 58];
-            energiaRicochet = tabelaEffEnergy[efficiency] !== undefined ? tabelaEffEnergy[efficiency] : 58;
+            energiaCalculada = tabelaEffEnergy[efficiency] !== undefined ? tabelaEffEnergy[efficiency] : 58;
+          }
+        } else if (skillId === "ww_flying") {
+          energiaCalculada = 377;
+          if (range > 0) {
+            const tabelaRangeFlying = [377, 320, 264, 207, 151, 94];
+            energiaCalculada = tabelaRangeFlying[range] !== undefined ? tabelaRangeFlying[range] : 94;
+          } else if (efficiency > 0) {
+            const tabelaEffFlying = [377, 226, 75, 63, 63, 63];
+            energiaCalculada = tabelaEffFlying[efficiency] !== undefined ? tabelaEffFlying[efficiency] : 63;
           }
         }
 
-        // Armadilha do Luck
+        // Tratamento de Crítico e Armadilhas
         let fakeCritChance = 0;
         if (skillId === "ww_ricochet") {
-          fakeCritChance = luck * 8.0; 
+          fakeCritChance = luck * 8.0;
           if (luck > 0) {
             alertas += `<p class='erro'>⚠️ LUCK TRAP TRIGGERED: Simulated Crit is ${fakeCritChance.toFixed(1)}%, but actual engine output remains 0.0% (Wasted Stat)!</p>`;
           }
         }
 
-        const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
+        const critChanceFlying = skillId === "ww_flying" ? (luck * 8.0) : 0;
+        const danoCritico = (skill.canCrit && skillId === "ww_flying" && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
-        if (!skill.canCrit && skillId !== "ww_ricochet" && luck > 0) {
-          alertas += "<p class='alerta'>⚠️ Wasted Slot: This skill cannot crit (CanCrit = False).</p>";
+        if (speed >= skill.speedCapAlerta && skillId === "ww_flying") {
+          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
         }
 
-        // Montagem do HTML de saída para skills de dano
+        // Renderização específica por skill de dano
         if (skillId === "ww_ricochet") {
           corpoHTML = `
             <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(+${dmg} Dmg)` : ''} ${speed > 0 ? `(+${speed} Spd Dmg)` : ''}</p>
-            <p><strong>Energy Cost:</strong> ${energiaRicochet} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
-            <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s ${duration > 0 ? `(+${duration} Duration)` : ''}</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+            <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${fakeCritChance.toFixed(1)}% <span style="color:#f85149;">(Fake/No Effect)</span></p>
             <p><strong>Chance of Stun:</strong> 19.0% | <strong>Disarm:</strong> 45.0%</p>
           `;
-        } else {
+        } else if (skillId === "ww_flying") {
           const attackSpeed = 100 + (speed * 20);
           corpoHTML = `
-            <p><strong>Normal Damage:</strong> ${danoNormal}</p>
-            <p><strong>Critical Damage:</strong> ${danoCritico > 0 ? danoCritico : "N/A"}</p>
+            <p><strong>Damage:</strong> ${danoNormal}/sec</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
             <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+            <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
+            <p><strong>Chance of Critical Hit:</strong> ${critChanceFlying.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
+            <p><strong>Chance of Stun:</strong> 25.0%</p>
           `;
         }
       } else {
-        // Bloco do Lasso Capture (mantém o que já estava)
-      
+        // Bloco do Lasso Capture
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        
         const ganhoDuracaoTotal = (duration * (skill.ganhoPorDuration || 0)) + 
                                   (speed * (skill.ganhoPorSpeedDuration || 0)) + 
                                   (luck * (skill.ganhoPorLuckDuration || 0));
         const duracaoFinal = skill.duracaoBase + ganhoDuracaoTotal;
         
         let energiaCalculada = skill.energiaBase || 0;
-
         if (efficiency > 0 && skillId === "ww_lasso") {
           const tabelaEficiencia = [253, 152, 51, 42, 42, 42];
           energiaCalculada = tabelaEficiencia[efficiency] !== undefined ? tabelaEficiencia[efficiency] : 42;
@@ -219,35 +223,12 @@
           energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
         }
 
-       if (skill.pisoDano > 0 && skillId === "ww_flying") {
-        const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
-        const attackSpeed = 100 + (speed * 20);
-        const stunDurationFinal = 2.0 + (duration * 2.4);
-        const critChance = luck * 8.0; // 0% a 40%
-        const danoCritico = luck > 0 ? Math.round(danoNormal * 1.8) : 0; // Estimativa de dano crítico
-
-        let energiaFlying = 377;
-        if (range > 0) {
-          const tabelaRangeFlying = [377, 320, 264, 207, 151, 94];
-          energiaFlying = tabelaRangeFlying[range] !== undefined ? tabelaRangeFlying[range] : 94;
-        } else if (efficiency > 0) {
-          const tabelaEffFlying = [377, 226, 75, 63, 63, 63];
-          energiaFlying = tabelaEffFlying[efficiency] !== undefined ? tabelaEffFlying[efficiency] : 63;
-        }
-
-        if (speed >= skill.speedCapAlerta) {
-          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
-        }
-
         corpoHTML = `
-          <p><strong>Damage:</strong> ${danoNormal}/sec ${dmg > 0 ? `(+${dmg} Dmg)` : ''}</p>
-          <p><strong>Energy Cost:</strong> ${energiaFlying} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
-          <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
-          <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
-          <p><strong>Chance of Critical Hit:</strong> ${critChance.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
-          <p><strong>Chance of Stun:</strong> 25.0%</p>
+          <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
+          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s</p>
+          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft</p>
+          <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
-      }
       }
 
       const notasHTML = Array.isArray(skill.notasFixas) 
