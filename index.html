@@ -185,7 +185,7 @@
           duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0], // Duration sec
           luckDuration: [4.0, 5.8, 7.5, 9.3, 11.0, 12.8], // Luck duration scaling
           dmgEnergy: [253, 215, 177, 139, 101, 63], // Energy Cost com Damage
-          effEnergy: [253, 253, 152, 51, 42, 42] // Energy Cost com Efficiency
+          effEnergy: [253, 152, 51, 42, 42, 42] // Energy Cost com Efficiency
         },
         notasFixas: [
           "Crowd control skill (Max 5 targets). Range boosts expand radius up to 49 ft.",
@@ -250,7 +250,7 @@
         if (luck > 0 && duration === 0) {
           duracaoFinal = skill.tabelas.luckDuration[luck];
         }
-        let energiaLasso = 253;
+        let energiaLasso = 253; // Base padrão
         if (efficiency > 0) {
           energiaLasso = skill.tabelas.effEnergy[efficiency];
         } else if (dmg > 0) {
