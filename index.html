@@ -61,10 +61,10 @@
         tabelas: {
           damageQuick: [478, 511, 545, 578, 612, 645],
           damageStrong: [956, 1022, 1089, 1156, 1223, 1290],
-          speed: [100.0, 107.0, 114.0, 121.0, 128.0, 135.0], // Attack Speed %
-          luck: [10.0, 13.5, 17.0, 20.5, 24.0, 27.5], // Crit %
-          duration: [2.0, 3.7, 5.4, 7.1, 8.8, 10.5], // Stun sec
-          secondaryBuff: [478, 494, 511, 528, 545, 561] // Range/Efficiency minor quick dmg scaling
+          speed: [100.0, 107.0, 114.0, 121.0, 128.0, 135.0],
+          luck: [10.0, 13.5, 17.0, 20.5, 24.0, 27.5],
+          duration: [2.0, 3.7, 5.4, 7.1, 8.8, 10.5],
+          secondaryBuff: [478, 494, 511, 528, 545, 561]
         },
         notasFixas: [
           "Base Quick Attack: 478 -> Max 645. Strong Attack: 956 -> Max 1290.",
@@ -85,7 +85,7 @@
           damage: [1363, 1772, 2181, 2590, 2999, 3407],
           speed: [100, 120, 140, 160, 180, 200],
           luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0],
-          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
+          duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0], // Stun duration sec
           rangeEnergy: [377, 320, 264, 207, 151, 94],
           effEnergy: [377, 226, 75, 63, 63, 63]
         },
@@ -93,7 +93,7 @@
           "Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
           "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max).",
           "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (Base 0% -> 40% max).",
-          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost.",
+          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
           "🎯 Range Scaling: Reduces Energy Cost (-56/boost, base 377 -> 94 max).",
           "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts."
         ]
@@ -251,13 +251,12 @@
         `;
       } else if (skill.pisoDano > 0) {
         let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
-        let energiaCalculada = 261;
+        let energiaCalculada = 377;
 
-        if (skillId === "ww_ricochet") {
-          if (speed > 0) danoNormal += Math.round(speed * skill.ganhoPorSpeedDano);
-          energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 348);
-        } else if (skillId === "ww_flying") {
+        if (skillId === "ww_flying") {
           energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 377);
+        } else if (skillId === "ww_ricochet") {
+          energiaCalculada = range > 0 ? skill.tabelas.rangeEnergy[range] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 348);
         } else if (skillId === "ww_spin") {
           energiaCalculada = duration > 0 ? skill.tabelas.durationEnergy[duration] : (efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : 117);
         } else if (skillId === "ww_snare") {
@@ -267,16 +266,17 @@
         const critChanceVal = skill.tabelas.luck ? skill.tabelas.luck[luck] : 0;
         const speedVal = skillId === "ww_flying" ? skill.tabelas.speed[speed] : (skillId === "ww_spin" ? skill.tabelas.speed[speed] : (skillId === "ww_snare" ? skill.tabelas.speedImpact[speed] : 100));
         const rangeVal = skillId === "ww_spin" ? skill.tabelas.range[range] : (skillId === "ww_snare" ? skill.tabelas.range[range] : 24.0);
-        const stunChanceVal = skillId === "ww_snare" ? skill.tabelas.stunChance[duration] : 5.0;
+        const stunSecVal = skill.tabelas.duration ? skill.tabelas.duration[duration] : 2.0;
+        const stunChanceVal = skillId === "ww_snare" ? skill.tabelas.stunChance[duration] : 25.0;
         const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
 
-        if (skillId === "ww_snare") {
+        if (skillId === "ww_flying") {
           corpoHTML = `
-            <p><strong>Melee Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
-            <p><strong>Energy Cost:</strong> ${energiaCalculada} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
-            <p><strong>Impact Force:</strong> ${speedVal}%</p>
-            <p><strong>Snare Distance:</strong> ${rangeVal} ft</p>
+            <p><strong>Damage:</strong> ${danoNormal}/sec</p>
+            <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
+            <p><strong>Attack Speed:</strong> ${speedVal}%</p>
             <p><strong>Chance of Stun:</strong> ${stunChanceVal}%</p>
+            <p><strong>Duration of Stun:</strong> ${stunSecVal}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
           `;
         } else if (skillId === "ww_spin") {
@@ -292,14 +292,16 @@
           corpoHTML = `
             <p><strong>Normal Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
-            <p><strong>Stun Duration:</strong> ${(2.0 + duration * 2.4).toFixed(1)}s</p>
+            <p><strong>Stun Duration:</strong> ${stunSecVal}s</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
           `;
-        } else if (skillId === "ww_flying") {
+        } else if (skillId === "ww_snare") {
           corpoHTML = `
-            <p><strong>Damage:</strong> ${danoNormal}/sec</p>
+            <p><strong>Melee Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
-            <p><strong>Attack Speed:</strong> ${speedVal}%</p>
+            <p><strong>Impact Force:</strong> ${speedVal}%</p>
+            <p><strong>Snare Distance:</strong> ${rangeVal} ft</p>
+            <p><strong>Chance of Stun:</strong> ${stunChanceVal}%</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
           `;
         }
