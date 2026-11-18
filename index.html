@@ -53,6 +53,26 @@
     };
 
     const BANCO_DE_SKILLS = {
+      ww_combat: {
+        heroi: "Wonder Woman",
+        nome: "Combat (Basic Attacks & Combos)",
+        descricao: "Overall ability to deal damage with standard attacks and combos.",
+        isCombat: true,
+        tabelas: {
+          damageQuick: [478, 511, 545, 578, 612, 645],
+          damageStrong: [956, 1022, 1089, 1156, 1223, 1290],
+          speed: [100.0, 107.0, 114.0, 121.0, 128.0, 135.0], // Attack Speed %
+          luck: [10.0, 13.5, 17.0, 20.5, 24.0, 27.5], // Crit %
+          duration: [2.0, 3.7, 5.4, 7.1, 8.8, 10.5], // Stun sec
+          secondaryBuff: [478, 494, 511, 528, 545, 561] // Range/Efficiency minor quick dmg scaling
+        },
+        notasFixas: [
+          "Base Quick Attack: 478 -> Max 645. Strong Attack: 956 -> Max 1290.",
+          "⚔️ Speed Scaling: Boosts attack speed up to 135%.",
+          "🍀 Luck Scaling: Scales base critical hit chance from 10% up to 27.5%.",
+          "⏱️ Duration Scaling: Massively increases stun duration up to 10.5 seconds."
+        ]
+      },
       ww_flying: {
         heroi: "Wonder Woman",
         nome: "Flying Charge",
@@ -137,11 +157,11 @@
         speedCapAlerta: 99,
         tabelas: {
           damage: [1421, 1847, 2274, 2700, 3126, 3552],
-          speedImpact: [400, 680, 960, 1240, 1520, 1800], // Impact Force %
-          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0], // Crit %
-          stunChance: [5.0, 30.0, 55.0, 80.0, 105.0, 130.0], // Stun %
-          range: [29.0, 37.1, 45.2, 53.4, 61.5, 69.6], // Snare distance ft
-          effEnergy: [261, 157, 52, 44, 44, 44] // Energy Cost com Efficiency
+          speedImpact: [400, 680, 960, 1240, 1520, 1800],
+          luck: [0.0, 8.0, 16.0, 24.0, 32.0, 40.0],
+          stunChance: [5.0, 30.0, 55.0, 80.0, 105.0, 130.0],
+          range: [29.0, 37.1, 45.2, 53.4, 61.5, 69.6],
+          effEnergy: [261, 157, 52, 44, 44, 44]
         },
         notasFixas: [
           "Base damage: 1421 (+426.2 per Damage boost, max 3552).",
@@ -207,7 +227,29 @@
       let alertas = "";
       let corpoHTML = "";
 
-      if (skill.pisoDano > 0) {
+      if (skill.isCombat) {
+        let quickDmg = skill.tabelas.damageQuick[dmg];
+        let strongDmg = skill.tabelas.damageStrong[dmg];
+        if (range > 0) {
+          quickDmg = skill.tabelas.secondaryBuff[range];
+          strongDmg = Math.round(quickDmg * 2);
+        } else if (efficiency > 0) {
+          quickDmg = skill.tabelas.secondaryBuff[efficiency];
+          strongDmg = Math.round(quickDmg * 2);
+        }
+
+        const attackSpeedVal = skill.tabelas.speed[speed];
+        const critVal = skill.tabelas.luck[luck];
+        const stunSec = skill.tabelas.duration[duration];
+
+        corpoHTML = `
+          <p><strong>Quick Attack Damage:</strong> ${quickDmg}</p>
+          <p><strong>Strong Attack Damage:</strong> ${strongDmg}</p>
+          <p><strong>Attack Speed:</strong> ${attackSpeedVal}%</p>
+          <p><strong>Critical Hit Chance:</strong> ${critVal}%</p>
+          <p><strong>Stun Duration:</strong> ${stunSec}s</p>
+        `;
+      } else if (skill.pisoDano > 0) {
         let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
         let energiaCalculada = 261;
 
