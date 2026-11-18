@@ -52,13 +52,19 @@
       ww_flying: {
         heroi: "Wonder Woman",
         nome: "Flying Charge",
-        descricao: "Wonder Woman spins through the air, charging into enemies with her tiara.",
-        pisoDano: 223,
-        ganhoPorDamage: 85,
+        descricao: "Wonder Woman charges forward damaging all enemies in her path.",
+        pisoDano: 1363,
+        ganhoPorDamage: 409,
         canCrit: true,
-        multCritico: 2.95,
+        multCritico: 2.0, // multiplicador padrão de crítico
         speedCapAlerta: 3,
-        notasFixas: ["Validated optimal build: 1 Damage + 2 Luck + 2 Speed (308 / 895 at 140%)"]
+        notasFixas: ["Base damage: 1363/sec (+409 per Damage boost, max 3407/sec).",
+          "⚡ Speed Scaling: +20% attack speed per boost (Base 100% -> 200% max). Watch out for hitbox pass-through at 160%+!",
+          "🍀Luck Scaling: Fully functional! Adds 8% crit chance per boost (Base 0% -> 14% max).",
+          "⏱️ Duration Scaling: Adds +2.4s to Stun Duration per boost (Base 2.0s -> 14.0s max).",
+          "🎯 Range Scaling: Reduces Energy Cost (-56/boost, base 377 -> 94 max).",
+          "🔋 Efficiency Curve: Drops cost to 63 at 3-5 boosts (Curve: 377 -> 226 -> 75 -> 63 -> 63 -> 63)."
+        ]
       },
       ww_ricochet: {
         heroi: "Wonder Woman",
@@ -213,12 +219,35 @@
           energiaCalculada -= (dmg * skill.reducaoEnergiaPorDamage);
         }
 
+       if (skill.pisoDano > 0 && skillId === "ww_flying") {
+        const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
+        const attackSpeed = 100 + (speed * 20);
+        const stunDurationFinal = 2.0 + (duration * 2.4);
+        const critChance = luck * 8.0; // 0% a 40%
+        const danoCritico = luck > 0 ? Math.round(danoNormal * 1.8) : 0; // Estimativa de dano crítico
+
+        let energiaFlying = 377;
+        if (range > 0) {
+          const tabelaRangeFlying = [377, 320, 264, 207, 151, 94];
+          energiaFlying = tabelaRangeFlying[range] !== undefined ? tabelaRangeFlying[range] : 94;
+        } else if (efficiency > 0) {
+          const tabelaEffFlying = [377, 226, 75, 63, 63, 63];
+          energiaFlying = tabelaEffFlying[efficiency] !== undefined ? tabelaEffFlying[efficiency] : 63;
+        }
+
+        if (speed >= skill.speedCapAlerta) {
+          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
+        }
+
         corpoHTML = `
-          <p><strong>Energy Cost:</strong> ${energiaCalculada} ${dmg > 0 ? `(${dmg} Damage boost${dmg !== 1 ? 's' : ''})` : ''} ${efficiency > 0 ? `(${efficiency} Efficiency boost${efficiency !== 1 ? 's' : ''})` : ''}</p>
-          <p><strong>Duration:</strong> ${duracaoFinal.toFixed(1)}s</p>
-          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft</p>
-          <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
+          <p><strong>Damage:</strong> ${danoNormal}/sec ${dmg > 0 ? `(+${dmg} Dmg)` : ''}</p>
+          <p><strong>Energy Cost:</strong> ${energiaFlying} ${range > 0 ? `(Range Boosted)` : ''} ${efficiency > 0 ? `(Efficiency Boosted)` : ''}</p>
+          <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+          <p><strong>Stun Duration:</strong> ${stunDurationFinal.toFixed(1)}s</p>
+          <p><strong>Chance of Critical Hit:</strong> ${critChance.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
+          <p><strong>Chance of Stun:</strong> 25.0%</p>
         `;
+      }
       }
 
       const notasHTML = Array.isArray(skill.notasFixas) 
