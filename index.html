@@ -51,7 +51,7 @@
     const BANCO_DE_SKILLS = {
       ww_flying: {
         heroi: "Wonder Woman",
-        nome: "Flying Charge (Investida Giratória)",
+        nome: "Flying Charge",
         descricao: "Wonder Woman spins through the air, charging into enemies with her tiara.",
         pisoDano: 223,
         ganhoPorDamage: 85,
@@ -62,19 +62,22 @@
       },
       ww_ricochet: {
         heroi: "Wonder Woman",
-        nome: "Ricochet (Tiara)",
-        descricao: "Wonder Woman throws her tiara, bouncing it between nearby enemies.",
-        pisoDano: 1100,
+        nome: "Ricochet",
+        descricao: "Wonder Woman throws her magic tiara like a boomerang, hitting one or more targets before returning to her.",
+        pisoDano: 1044,
         ganhoPorDamage: 302,
         canCrit: false,
         multCritico: 1,
         speedCapAlerta: 99,
-        notasFixas: ["Flag CanCrit = FALSE. Focus 100% on Damage (2610 flat with 5 boosts)."]
+        notasFixas: [
+          "Base normal damage: 1044. Pure Damage scaling rules here.",
+          "⚠️ TRAP WARNING: Luck boosts falsely inflate the simulated crit chance up to 40.0% (8% per boost), but the engine hard-caps actual critical output at 0%. Do not waste slots on Luck!"
+        ]
       },
       ww_lasso: {
         heroi: "Wonder Woman",
         nome: "Lasso Capture",
-        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture mutiple enemies at once, pulling them together in a group.",
+        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture multiple enemies at once, pulling them together in a group.",
         pisoDano: 0,
         ganhoPorDamage: 0,
         canCrit: true,
@@ -92,7 +95,7 @@
         notasFixas: [
           "Crowd control skill. Range and Duration boosts look great here!",
           "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly by 38 per boost (253 down to 63).",
-          "Tested with level 7 Speed & Luck Boosts: Both Secretly scales duration (1.8s per boost)!",
+          "Tested with level 7 Speed & Luck Boosts: Both secretly scale duration (1.8s per boost)!",
           "Tested with level 7 Efficiency Boosts: Drips Energy cost down rapidly (1->152, 2->51, 3->42, 4->42, 5->42)."
         ]
       }
@@ -118,8 +121,6 @@
       const efficiency = Number(document.getElementById("efficiency").value) || 0;
       const caixa = document.getElementById("resultado");
 
-      console.log("Calculando skill:", skill.nome, "| Efficiency:", efficiency);
-
       const totalBoosts = dmg + luck + speed + duration + range + efficiency;
 
       if (totalBoosts > 5) {
@@ -132,23 +133,31 @@
 
       if (skill.pisoDano > 0) {
         const danoNormal = Math.round(skill.pisoDano + (dmg * skill.ganhoPorDamage));
-        const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
         const attackSpeed = 100 + (speed * 20);
+        
+        // Simulação específica para o Ricochet enganar o usuário com o luck, mas avisando que é zero real
+        let fakeCritChance = 0;
+        if (skillId === "ww_ricochet") {
+          fakeCritChance = luck * 8.0; // 0%, 8%, 16%, 24%, 32%, 40%
+          if (luck > 0) {
+            alertas += `<p class='erro'>⚠️ LUCK TRAP TRIGGERED: Simulated Crit is ${fakeCritChance.toFixed(1)}%, but actual engine output remains 0.0% (Wasted Stat)!</p>`;
+          }
+        }
 
-        if (!skill.canCrit && luck > 0) {
+        const danoCritico = (skill.canCrit && luck > 0) ? Math.round(danoNormal * skill.multCritico) : 0;
+
+        if (!skill.canCrit && skillId !== "ww_ricochet" && luck > 0) {
           alertas += "<p class='alerta'>⚠️ Wasted Slot: This skill cannot crit (CanCrit = False).</p>";
         }
         if (skill.canCrit && luck === 0) {
           alertas += "<p class='alerta'>⚠️ Crit Disabled: 0 luck boosts = 0% crit chance.</p>";
         }
-        if (speed >= skill.speedCapAlerta) {
-          alertas += "<p class='alerta'>⚠️ Hitbox Warning: 160%+ speed can pass through targets without registering hits.</p>";
-        }
 
         corpoHTML = `
           <p><strong>Normal Damage:</strong> ${danoNormal}</p>
-          <p><strong>Critical Damage:</strong> ${danoCritico > 0 ? danoCritico : "N/A"}</p>
-          <p><strong>Attack Speed:</strong> ${attackSpeed}%</p>
+          <p><strong>Chance of Critical Hit:</strong> ${skillId === "ww_ricochet" ? `${fakeCritChance.toFixed(1)}% <span style="color:#f85149;">(Fake/No Effect)</span>` : (danoCritico > 0 ? "Active" : "0.0%")}</p>
+          <p><strong>Energy Cost:</strong> 348</p>
+          <p><strong>Chance of Stun:</strong> 19.0% | <strong>Stun Duration:</strong> 2.0s | <strong>Disarm:</strong> 45.0%</p>
         `;
       } else {
         const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
@@ -160,7 +169,6 @@
         
         let energiaCalculada = skill.energiaBase || 0;
 
-        // Tabela limpa e direta de eficiência
         if (efficiency > 0 && skillId === "ww_lasso") {
           const tabelaEficiencia = [253, 152, 51, 42, 42, 42];
           energiaCalculada = tabelaEficiencia[efficiency] !== undefined ? tabelaEficiencia[efficiency] : 42;
@@ -185,13 +193,12 @@
         <h3 style="margin: 8px 0; color: #58a6ff; font-size: 16px;">${skill.nome}</h3>
         ${skill.descricao ? `<p style="color: #8b949e; font-style: italic; font-size: 13px; margin-bottom: 12px;">"${skill.descricao}"</p>` : ''}
         ${corpoHTML}
-        <p><strong>Utility Boosts:</strong> +${duration} Duration / +${range} Range / +${efficiency} Efficiency / +${dmg} Damage</p>
-        <p style="color:#8b949e; font-size:13px;">${notasHTML}</p>
+        <p><strong>Active Boosts:</strong> +${dmg} Damage / +${luck} Luck / +${speed} Speed / +${duration} Duration / +${range} Range / +${efficiency} Efficiency</p>
+        <p style="color:#8b949e; font-size:13px; margin-top:10px;">${notasHTML}</p>
         ${alertas}
       `;
     }
 
-    // Registra os ouvintes de eventos com segurança total via JavaScript
     document.getElementById("skillSelect").addEventListener("change", calcular);
     document.getElementById("dmg").addEventListener("input", calcular);
     document.getElementById("luck").addEventListener("input", calcular);
@@ -201,7 +208,6 @@
     document.getElementById("efficiency").addEventListener("input", calcular);
     document.getElementById("btnRecalcular").addEventListener("click", calcular);
 
-    // Executa no carregamento inicial
     calcular();
   </script>
 
