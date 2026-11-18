@@ -104,11 +104,11 @@
         descricao: "Wonder Woman throws her magic tiara like a boomerang, hitting one or more targets before returning to her.",
         pisoDano: 1044,
         canCrit: true,
-        multCritico: 3.0, // Corrigido para o multiplicador real de 3x (dado confirmado: 1987 vira 5963)
+        multCritico: 3.0,
         speedCapAlerta: 99,
         tabelas: {
           damage: [1044, 1357, 1670, 1984, 2297, 2610],
-          speedDano: [1044, 1128, 1211, 1295, 1378, 1462], // Valores exatos com speed boost
+          speedDano: [1044, 1128, 1211, 1295, 1378, 1462],
           duration: [2.0, 4.4, 6.8, 9.2, 11.6, 14.0],
           rangeEnergy: [348, 296, 244, 191, 139, 87],
           effEnergy: [348, 348, 209, 70, 58, 58],
@@ -168,7 +168,7 @@
           "Base damage: 1421 (+426.2 per Damage boost, max 3552).",
           "⚡ Speed Scaling: Massively scales Impact Force (+280% per boost, max 1800%).",
           "🍀 Luck Scaling: Fully functional! Adds +8% crit chance per boost (max 40%).",
-          "⏱️ Duration/Stun Scaling: Adds +25% Stun Chance per boost (max 130%).",
+          "⏱️ Duration/Stun Scaling: Adds +25% Stun Duration/Chance per boost (max 130%).",
           "🎯 Range Scaling: Extends Snare Distance (+8.12 ft per boost, max 69.6 ft).",
           "🔋 Efficiency Curve: Drops energy cost down to a floor of 44."
         ]
@@ -176,23 +176,22 @@
       ww_lasso: {
         heroi: "Wonder Woman",
         nome: "Lasso Capture",
-        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time.",
+        descricao: "Wonder Woman binds her foe using the Magic Lariat, holding him for a time. Level-up this skill to capture multiple enemies at once.",
         pisoDano: 0,
-        canCrit: true,
-        multCritico: 0,
-        speedCapAlerta: 99,
-        raioBase: 12.0,
-        ganhoPorRange: 7.4,
+        canCrit: false,
         maxInimigos: 5,
         tabelas: {
-          dmgEnergy: [253, 215, 177, 139, 101, 63],
-          effEnergy: [253, 253, 152, 51, 42, 42],
-          duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0]
+          range: [12.0, 19.4, 26.8, 34.2, 41.6, 49.0], // Capture Radius ft
+          duration: [4.0, 7.2, 10.4, 13.6, 16.8, 20.0], // Duration sec
+          luckDuration: [4.0, 5.8, 7.5, 9.3, 11.0, 12.8], // Luck duration scaling
+          dmgEnergy: [253, 215, 177, 139, 101, 63], // Energy Cost com Damage
+          effEnergy: [253, 253, 152, 51, 42, 42] // Energy Cost com Efficiency
         },
         notasFixas: [
-          "Crowd control skill. Range and Duration boosts look great here!",
-          "Tested with Level 7 Damage Boosts: Reduces Energy Cost linearly down to 63.",
-          "Tested with level 7 Efficiency Boosts: Drops energy cost down to 42."
+          "Crowd control skill (Max 5 targets). Range boosts expand radius up to 49 ft.",
+          "⏱️ Duration Boosts: Massively scales capture duration from 4.0s up to 20.0s.",
+          "🍀 Luck Boosts: Also scales capture duration up to 12.8s.",
+          "🔋 Energy Cost: Both Damage boosts (down to 63) and Efficiency boosts (down to 42) aggressively lower energy consumption!"
         ]
       }
     };
@@ -225,7 +224,6 @@
         return;
       }
 
-      let alertas = "";
       let corpoHTML = "";
 
       if (skill.isCombat) {
@@ -239,16 +237,31 @@
           strongDmg = Math.round(quickDmg * 2);
         }
 
-        const attackSpeedVal = skill.tabelas.speed[speed];
-        const critVal = skill.tabelas.luck[luck];
-        const stunSec = skill.tabelas.duration[duration];
-
         corpoHTML = `
           <p><strong>Quick Attack Damage:</strong> ${quickDmg}</p>
           <p><strong>Strong Attack Damage:</strong> ${strongDmg}</p>
-          <p><strong>Attack Speed:</strong> ${attackSpeedVal}%</p>
-          <p><strong>Critical Hit Chance:</strong> ${critVal}%</p>
-          <p><strong>Stun Duration:</strong> ${stunSec}s</p>
+          <p><strong>Attack Speed:</strong> ${skill.tabelas.speed[speed]}%</p>
+          <p><strong>Critical Hit Chance:</strong> ${skill.tabelas.luck[luck]}%</p>
+          <p><strong>Stun Duration:</strong> ${skill.tabelas.duration[duration]}s</p>
+        `;
+      } else if (skillId === "ww_lasso") {
+        let raioFinal = skill.tabelas.range[range];
+        let duracaoFinal = skill.tabelas.duration[duration];
+        if (luck > 0 && duration === 0) {
+          duracaoFinal = skill.tabelas.luckDuration[luck];
+        }
+        let energiaLasso = 253;
+        if (efficiency > 0) {
+          energiaLasso = skill.tabelas.effEnergy[efficiency];
+        } else if (dmg > 0) {
+          energiaLasso = skill.tabelas.dmgEnergy[dmg];
+        }
+
+        corpoHTML = `
+          <p><strong>Energy Cost:</strong> ${energiaLasso} ${efficiency > 0 ? '(Efficiency Boosted)' : (dmg > 0 ? '(Damage Boosted)' : '')}</p>
+          <p><strong>Capture Radius:</strong> ${raioFinal} ft</p>
+          <p><strong>Capture Duration:</strong> ${duracaoFinal}s</p>
+          <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
         `;
       } else if (skill.pisoDano > 0) {
         let danoNormal = skill.tabelas.damage[dmg] || skill.pisoDano;
@@ -286,7 +299,7 @@
             <p><strong>Impact Damage:</strong> ${danoNormal} ${dmg > 0 ? `(${dmg} Dmg)` : ''}</p>
             <p><strong>Energy Cost:</strong> ${energiaCalculada}</p>
             <p><strong>Spin Rate:</strong> ${speedVal}%</p>
-            <p><strong>Capture Range:</strong> ${rangeVal} ft</p>
+            <p><strong>Capture Radius:</strong> ${rangeVal} ft</p>
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
             <p><strong>Damage to Captive:</strong> 49/hit</p>
           `;
@@ -308,15 +321,6 @@
             <p><strong>Chance of Critical Hit:</strong> ${critChanceVal.toFixed(1)}% ${danoCritico > 0 ? `(Est. Crit: ${danoCritico})` : ''}</p>
           `;
         }
-      } else {
-        const raioFinal = skill.raioBase + (range * (skill.ganhoPorRange || 0));
-        let energiaLasso = efficiency > 0 ? skill.tabelas.effEnergy[efficiency] : (dmg > 0 ? skill.tabelas.dmgEnergy[dmg] : 253);
-
-        corpoHTML = `
-          <p><strong>Energy Cost:</strong> ${energiaLasso}</p>
-          <p><strong>Capture Radius:</strong> ${raioFinal.toFixed(1)} ft</p>
-          <p><strong>Max Targets:</strong> ${skill.maxInimigos}</p>
-        `;
       }
 
       const notasHTML = Array.isArray(skill.notasFixas) 
@@ -330,7 +334,6 @@
         ${corpoHTML}
         <p><strong>Active Boosts:</strong> +${dmg} Dmg / +${luck} Luck / +${speed} Spd / +${duration} Dur / +${range} Rng / +${efficiency} Eff</p>
         <p style="color:#8b949e; font-size:13px; margin-top:10px;">${notasHTML}</p>
-        ${alertas}
       `;
     }
 
